@@ -16,6 +16,7 @@ import {
   fetchChatMessages,
   postMessage
 } from "../api/chatApi";
+import '../styles/SecureChatPage.css'
 
 const SecureChatPage = () => {
   const [messages, setMessages] = useState([]);
