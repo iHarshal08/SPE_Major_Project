@@ -1,5 +1,5 @@
 export async function loginUser(email, password) {
-    const response = await fetch('http://localhost:8080/login', {
+    const response = await fetch('http://login:8080/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keyexchange-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keyexchange
+  template:
+    metadata:
+      labels:
+        app: keyexchange
+    spec:
+      containers:
+        - name: keyexchange
+          image: keyexchange:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/chat?createDatabaseIfNotExist=true
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: Harshal@p0808

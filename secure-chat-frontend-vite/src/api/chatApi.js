@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const API1 = "http://localhost:8080";
-const API2 = "http://localhost:8081";
-const API3 = "http://localhost:8082";
+const API1 = "http://login:8080";
+const API2 = "http://keyexchange:8081";
+const API3 = "http://messaging:8082";
 export const sendPublicKey = async (jwt, userId, publicKey) => {
     console.log(jwt);
     const jwtSanitized = jwt.replace(/\s/g, ''); // remove all whitespace (including inside)
@@ -40,7 +40,7 @@ export async function loginUser(email, password) {
   const response = await fetch(`${API1}/login`, {
       method: 'POST',
       headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password })
   });
