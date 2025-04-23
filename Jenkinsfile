@@ -72,13 +72,13 @@ pipeline {
             steps {
                 script {
                     echo "🔐 Logging into Docker Hub..."
-                    sh """
+                    sh '''
                         echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin
                         docker push ${DOCKER_REPO}:keyexchange
                         docker push ${DOCKER_REPO}:messaging
                         docker push ${DOCKER_REPO}:login
                         docker push ${DOCKER_REPO}:frontend
-                    """
+                    '''
                 }
             }
         }
