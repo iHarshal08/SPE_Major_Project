@@ -7,11 +7,6 @@ pipeline {
         EMAIL_RECIPIENTS = 'Harshal.Purohit@iiitb.ac.in'
     }
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-    }
-
     stages {
 
         stage('Checkout Code') {
