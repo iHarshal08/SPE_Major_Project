@@ -33,7 +33,7 @@ pipeline {
 
                 stage('Build: Key Exchange') {
                     steps {
-                        dir('keyExchangeService') {
+                        dir('keyExhangeService') {
                             script {
                                 echo "🔧 Building Key Exchange image..."
                                 sh "mvn clean package -DskipTests"
