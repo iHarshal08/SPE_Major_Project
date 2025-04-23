@@ -24,6 +24,7 @@ pipeline {
                          dir('loginService') {
                             script {
                                  echo "🔧 Building Login Service image..."
+                                 sh "mvn clean package -DskipTests"
                                  sh "docker build -t ${DOCKER_REPO}:login ."
                             }
                          }
@@ -35,6 +36,7 @@ pipeline {
                         dir('keyExchangeService') {
                             script {
                                 echo "🔧 Building Key Exchange image..."
+                                sh "mvn clean package -DskipTests"
                                 sh "docker build -t ${DOCKER_REPO}:keyexchange ."
                             }
                         }
@@ -46,6 +48,7 @@ pipeline {
                         dir('messagingService') {
                             script {
                                 echo "🔧 Building Messaging Service image..."
+                                sh "mvn clean package -DskipTests"
                                 sh "docker build -t ${DOCKER_REPO}:messaging ."
                             }
                         }
