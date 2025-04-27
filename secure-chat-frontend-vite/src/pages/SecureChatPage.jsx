@@ -79,10 +79,14 @@ if (!token || token === "undefined") {
     console.log("⏯️ handleStartChat triggered");
     if (!recipientEmail) return setStatus("Please enter recipient's email");
     if (!myPublicKeyRef.current) {
-      await initializeKeys();
-      handleStartChat(); // retry once after setting ref
-      return;
-    }
+  await initializeKeys();
+  
+  // After generating, check again. Don't call recursively.
+  if (!myPublicKeyRef.current) {
+    setStatus("Key generation failed. Please refresh.");
+    return;
+  }
+}
 
     const token = sessionStorage.getItem("jwt_token").trim();
     if (!token) return setStatus("Missing auth token. Please log in.");

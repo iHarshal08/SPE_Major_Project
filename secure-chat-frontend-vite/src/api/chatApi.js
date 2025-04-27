@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const API1 = "http://login:8080";
-const API2 = "http://keyexchange:8081";
-const API3 = "http://messaging:8082";
+//const API = "http://chat-app.local:32540";
+//const API2 = "http://keyexchange:8081";
+//const API3 = "http://messaging:8082";
 export const sendPublicKey = async (jwt, userId, publicKey) => {
     console.log(jwt);
     const jwtSanitized = jwt.replace(/\s/g, ''); // remove all whitespace (including inside)
 
-    return await axios.post(`${API2}/exchange`, { userId, publicKey }, {
+    return await axios.post(`/keyexchange/exchange`, { userId, publicKey }, {
     headers: {
       Authorization: `Bearer ${jwtSanitized}`,
       "Content-Type": "application/json"
@@ -16,7 +16,7 @@ export const sendPublicKey = async (jwt, userId, publicKey) => {
 };
 
 export const pollForOtherKey = async (jwt, email) => {
-  return await axios.get(`${API2}/exchange`, {
+  return await axios.get(`/keyexchange/exchange`, {
     headers: { Authorization: `Bearer ${jwt}` },
     params: { email }
   });
@@ -24,20 +24,20 @@ export const pollForOtherKey = async (jwt, email) => {
 
 export const fetchChatMessages = async (jwt, recipient) => {
     console.log("JWT token being sent:", jwt);
-    return await axios.get(`${API3}/messages`, {
+    return await axios.get(`/messaging/messages`, {
     headers: { Authorization: `Bearer ${jwt}` },
     
   });
 };
 
 export const postMessage = async (jwt, to, encryptedMessage) => {
-  return await axios.post(`${API3}/send`, { to, message: encryptedMessage }, {
+  return await axios.post(`/messaging/send`, { to, message: encryptedMessage }, {
     headers: { Authorization: `Bearer ${jwt}` }
   });
 };
 
 export async function loginUser(email, password) {
-  const response = await fetch(`${API1}/login`, {
+  const response = await fetch(`/login/login`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',

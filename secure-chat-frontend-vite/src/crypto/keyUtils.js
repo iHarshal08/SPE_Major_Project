@@ -1,15 +1,21 @@
 export const generateKeyPair = async () => {
+  try {
     const keyPair = await window.crypto.subtle.generateKey(
       { name: "ECDH", namedCurve: "P-256" },
       true,
       ["deriveKey"]
     );
-  
+
     const rawPub = await window.crypto.subtle.exportKey("raw", keyPair.publicKey);
     const pubB64 = btoa(String.fromCharCode(...new Uint8Array(rawPub)));
-  
+
     return { keyPair, pubB64 };
-  };
+  } catch (err) {
+    console.error("❌ generateKeyPair failed:", err);
+    throw err; // rethrow to maintain original behavior
+  }
+};
+
   
   export const importOtherPublicKey = async (base64) => {
     const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));

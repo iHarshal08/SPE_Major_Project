@@ -15,7 +15,7 @@ spec:
       containers:
         - name: login
           image: login:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:

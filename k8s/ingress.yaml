@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: app-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "http://chat-app.local"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, OPTIONS"
@@ -14,31 +14,32 @@ spec:
     - host: chat-app.local
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /()?(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: frontend
                 port:
                   number: 80
-#          - path: /login
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: login
-#                port:
-#                  number: 8080
-#          - path: /keyexchange
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: keyexchange
-#                port:
-#                  number: 8081
-#          - path: /messaging
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: messaging
-#                port:
-#                  number: 8082
+          - path: /login(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: login
+                port:
+                  number: 8080
+          - path: /keyexchange(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: keyexchange
+                port:
+                  number: 8081
+          - path: /messaging(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: messaging
+                port:
+                  number: 8082
+
