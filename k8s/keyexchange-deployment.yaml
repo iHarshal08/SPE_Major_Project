@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: keyexchange
-          image: keyexchange:latest
+          image: iharshal/keyexchange:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081

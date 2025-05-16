@@ -1,0 +1,7 @@
+- name: Deploy chat application to Minikube using Kubernetes
+  hosts: localhost
+  become: false
+  vars:
+    k8s_namespace: default
+  roles:
+    - k8s-deploy

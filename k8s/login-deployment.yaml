@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: login
-          image: login:latest
+          image: iharshal/login:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

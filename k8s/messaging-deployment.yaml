@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: messaging
-          image: messaging:latest
+          image: iharshal/messaging:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
