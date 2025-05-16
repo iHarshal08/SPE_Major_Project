@@ -2,112 +2,58 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REPO = 'iharshal/spe'
-        DOCKER_CREDS = credentials('DockerHubCred')
-        EMAIL_RECIPIENTS = 'Harshal.Purohit@iiitb.ac.in'
+        DOCKER_USER = credentials('iharshal')
+        DOCKER_PASS = credentials('Harshal@p0808')
     }
 
     stages {
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo "📦 Checking out code from GitHub..."
-                checkout scm
+                git branch: 'main', url: 'https://github.com/iHarshal08/SPE_Major_Project.git'
             }
         }
 
-        stage('Build Docker Images') {
-            parallel {
-
-                stage('Build: Login Service') {
-                     steps {
-                         dir('loginService') {
-                            script {
-                                 echo "🔧 Building Login Service image..."
-                                 sh "mvn clean package -DskipTests"
-                                 sh "docker build -t ${DOCKER_REPO}:login ."
-                            }
-                         }
-                     }
-                }
-
-                stage('Build: Key Exchange') {
-                    steps {
-                        dir('keyExhangeService') {
-                            script {
-                                echo "🔧 Building Key Exchange image..."
-                                sh "mvn clean package -DskipTests"
-                                sh "docker build -t ${DOCKER_REPO}:keyexchange ."
-                            }
-                        }
-                    }
-                }
-
-                stage('Build: Messaging Service') {
-                    steps {
-                        dir('messagingService') {
-                            script {
-                                echo "🔧 Building Messaging Service image..."
-                                sh "mvn clean package -DskipTests"
-                                sh "docker build -t ${DOCKER_REPO}:messaging ."
-                            }
-                        }
-                    }
-                }
-
-                stage('Build: Frontend') {
-                    steps {
-                        dir('secure-chat-frontend-vite') {
-                            script {
-                                echo "🔧 Building Frontend image..."
-                                sh "docker build -t ${DOCKER_REPO}:frontend ."
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Push Docker Images') {
+        stage('Build and Trivy Scan') {
             steps {
                 script {
-                    echo "🔐 Logging into Docker Hub..."
-                    sh '''
-                        echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin
-                        docker push ${DOCKER_REPO}:keyexchange
-                        docker push ${DOCKER_REPO}:messaging
-                        docker push ${DOCKER_REPO}:login
-                        docker push ${DOCKER_REPO}:frontend
-                    '''
-                }
-            }
-        }
+                    def services = ['login', 'frontend', 'keyexchange', 'messaging']
+                    services.each { service ->
+                        dir(service) {
+                            echo "Building ${service} service..."
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                echo "🚀 Deploying services to Kubernetes..."
-                sh 'kubectl apply -f k8s/'
+                            // Step 1: Maven package
+                            sh 'mvn clean package -DskipTests'
+
+                            // Step 2: Docker build
+                            sh "docker build -t iharshal/${service}:latest ."
+
+                            // Step 3: Install Trivy if not already
+                            sh '''
+                                if ! [ -x "$(command -v trivy)" ]; then
+                                    echo "Installing Trivy..."
+                                    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                                fi
+                            '''
+
+                            // Step 4: Trivy scan (non-blocking)
+                            echo "Scanning iharshal/${service}:latest with Trivy..."
+                            sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${service}:latest || true"
+                        }
+                    }
+                }
             }
         }
     }
 
     post {
+        always {
+            echo 'Pipeline execution completed (success/failure).'
+        }
         success {
-            echo "✅ Build and deployment successful!"
-            mail to: "${EMAIL_RECIPIENTS}",
-                 subject: "✅ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "Good news! The build and deployment of '${env.JOB_NAME}' (#${env.BUILD_NUMBER}) was successful.\n\nCheck it at: ${env.BUILD_URL}"
+            echo 'Build and scan completed successfully.'
         }
-
         failure {
-            echo "❌ Build failed."
-            mail to: "${EMAIL_RECIPIENTS}",
-                 subject: "❌ Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "Oops! The build of '${env.JOB_NAME}' (#${env.BUILD_NUMBER}) failed.\n\nCheck the logs: ${env.BUILD_URL}"
+            echo 'Build failed. Check logs above.'
         }
-    }
-
-    triggers {
-        githubPush()
     }
 }
