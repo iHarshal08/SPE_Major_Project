@@ -53,7 +53,7 @@ pipeline {
                     sh """
                         if [ ! -x "${trivyBinary}" ]; then
                             echo "Downloading Trivy to ${trivyBinary}..."
-                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ${trivyDir}
+                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ${trivyDir} latest
                             chmod +x ${trivyBinary}
                         else
                             echo "Trivy already installed at ${trivyBinary}, skipping download."
