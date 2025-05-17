@@ -101,6 +101,7 @@ pipeline {
         stage('Kubernetes Deployment via Ansible') {
               steps {
                 sh 'ansible-galaxy collection install kubernetes.core'
+                sh 'pip3 install --user kubernetes'
                 sh 'ansible-playbook ansible/playbook.yml'
               }
             }
