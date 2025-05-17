@@ -39,35 +39,40 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
-            steps {
-                script {
-                    def trivyDir = "${env.WORKSPACE}/.trivy"
-                    def trivyBinary = "${trivyDir}/trivy"
-                    def imageNames = ['login', 'frontend', 'keyexchange', 'messaging']
+                stage('Trivy Scan') {
+                    steps {
+                        script {
+                            def trivyDir = "${env.WORKSPACE}/.trivy"
+                            def trivyBinary = "${trivyDir}/trivy"
+                            def trivyVersion = "0.50.2"
+                            def trivyTar = "${trivyDir}/trivy.tar.gz"
+                            def trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v${trivyVersion}/trivy_${trivyVersion}_Linux-64bit.tar.gz"
+                            def imageNames = ['login', 'frontend', 'keyexchange', 'messaging']
 
-                    // Create .trivy folder in workspace if it doesn't exist
-                    sh "mkdir -p ${trivyDir}"
+                            // Create .trivy folder
+                            sh "mkdir -p ${trivyDir}"
 
-                    // Download Trivy if not already present
-                    sh """
-                        if [ ! -x "${trivyBinary}" ]; then
-                            echo "Downloading Trivy to ${trivyBinary}..."
-                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ${trivyDir} latest
-                            chmod +x ${trivyBinary}
-                        else
-                            echo "Trivy already installed at ${trivyBinary}, skipping download."
-                        fi
-                    """
+                            // Download and extract Trivy if not present
+                            sh """
+                                if [ ! -x "${trivyBinary}" ]; then
+                                    echo "Downloading Trivy v${trivyVersion}..."
+                                    curl -L ${trivyUrl} -o ${trivyTar}
+                                    tar -xzf ${trivyTar} -C ${trivyDir}
+                                    chmod +x ${trivyBinary}
+                                else
+                                    echo "Trivy already installed at ${trivyBinary}, skipping download."
+                                fi
+                            """
 
-                    // Run Trivy scan on each image
-                    imageNames.each { imageName ->
-                        echo "Scanning iharshal/${imageName}:latest with Trivy..."
-                        sh "${trivyBinary} image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
+                            // Run Trivy scans
+                            imageNames.each { imageName ->
+                                echo "Scanning iharshal/${imageName}:latest with Trivy..."
+                                sh "${trivyBinary} image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
+                            }
+                        }
                     }
                 }
-            }
-        }
+
     }
 
     post {
