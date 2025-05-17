@@ -26,14 +26,12 @@ pipeline {
                         dir(folder) {
                             echo "Building ${imageName} from ${folder}..."
 
-                            // Maven build (if applicable)
                             if (fileExists('pom.xml')) {
                                 sh 'mvn clean package -DskipTests'
                             } else {
                                 echo "No pom.xml found in ${folder}, skipping Maven step."
                             }
 
-                            // Docker build
                             sh "docker build -t iharshal/${imageName}:latest ."
                         }
                     }
@@ -44,20 +42,28 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 script {
+                    def trivyDir = "${env.WORKSPACE}/.trivy"
+                    def trivyBinary = "${trivyDir}/trivy"
                     def imageNames = ['login', 'frontend', 'keyexchange', 'messaging']
 
-                    // Install Trivy once
-                    sh '''
-                        if ! [ -x "$(command -v trivy)" ]; then
-                            echo "Installing Trivy..."
-                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                        fi
-                    '''
+                    // Create .trivy folder in workspace if it doesn't exist
+                    sh "mkdir -p ${trivyDir}"
 
-                    // Scan each image
+                    // Download Trivy if not already present
+                    sh """
+                        if [ ! -x "${trivyBinary}" ]; then
+                            echo "Downloading Trivy to ${trivyBinary}..."
+                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ${trivyDir}
+                            chmod +x ${trivyBinary}
+                        else
+                            echo "Trivy already installed at ${trivyBinary}, skipping download."
+                        fi
+                    """
+
+                    // Run Trivy scan on each image
                     imageNames.each { imageName ->
                         echo "Scanning iharshal/${imageName}:latest with Trivy..."
-                        sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
+                        sh "${trivyBinary} image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
                     }
                 }
             }
