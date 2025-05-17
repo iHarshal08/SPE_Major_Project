@@ -12,10 +12,9 @@ pipeline {
             }
         }
 
-        stage('Build and Trivy Scan') {
+        stage('Build Docker Images') {
             steps {
                 script {
-                    // Map Jenkins image name to actual directory
                     def serviceDirs = [
                         login      : 'loginService',
                         frontend   : 'secure-chat-frontend-vite',
@@ -27,28 +26,38 @@ pipeline {
                         dir(folder) {
                             echo "Building ${imageName} from ${folder}..."
 
-                            // Step 1: Maven package (only if pom.xml exists)
+                            // Maven build (if applicable)
                             if (fileExists('pom.xml')) {
                                 sh 'mvn clean package -DskipTests'
                             } else {
                                 echo "No pom.xml found in ${folder}, skipping Maven step."
                             }
 
-                            // Step 2: Docker build
+                            // Docker build
                             sh "docker build -t iharshal/${imageName}:latest ."
-
-                            // Step 3: Install Trivy if not already
-                            sh '''
-                                if ! [ -x "$(command -v trivy)" ]; then
-                                    echo "Installing Trivy..."
-                                    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                                fi
-                            '''
-
-                            // Step 4: Trivy scan (non-blocking)
-                            echo "Scanning iharshal/${imageName}:latest with Trivy..."
-                            sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
                         }
+                    }
+                }
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                script {
+                    def imageNames = ['login', 'frontend', 'keyexchange', 'messaging']
+
+                    // Install Trivy once
+                    sh '''
+                        if ! [ -x "$(command -v trivy)" ]; then
+                            echo "Installing Trivy..."
+                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                        fi
+                    '''
+
+                    // Scan each image
+                    imageNames.each { imageName ->
+                        echo "Scanning iharshal/${imageName}:latest with Trivy..."
+                        sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
                     }
                 }
             }
