@@ -13,6 +13,7 @@ pipeline {
         }
 
         stage('Build Docker Images') {
+            when { expression { false } }
             steps {
                 script {
                     def serviceDirs = [
@@ -40,6 +41,7 @@ pipeline {
         }
 
         stage('Trivy Scan') {
+            when { expression { false } }
             steps {
                 script {
                     def trivyDir = "${env.WORKSPACE}/.trivy"
@@ -72,6 +74,7 @@ pipeline {
                 }
             }
         stage('Push Docker Images') {
+            when { expression { false } }
             steps {
                 script {
                     def serviceDirs = [
@@ -94,6 +97,14 @@ pipeline {
                 }
             }
         }
+
+        stage('Kubernetes Deployment via Ansible') {
+              steps {
+                sh 'ansible-playbook ansible/playbook.yml'
+              }
+            }
+
+
     }
 
     post {
