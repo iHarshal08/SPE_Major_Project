@@ -15,16 +15,27 @@ pipeline {
         stage('Build and Trivy Scan') {
             steps {
                 script {
-                    def services = ['login', 'frontend', 'keyexchange', 'messaging']
-                    services.each { service ->
-                        dir(service) {
-                            echo "Building ${service} service..."
+                    // Map Jenkins image name to actual directory
+                    def serviceDirs = [
+                        login      : 'loginService',
+                        frontend   : 'secure-chat-frontend-vite',
+                        keyexchange: 'keyExhangeService',
+                        messaging  : 'messagingService'
+                    ]
 
-                            // Step 1: Maven package
-                            sh 'mvn clean package -DskipTests'
+                    serviceDirs.each { imageName, folder ->
+                        dir(folder) {
+                            echo "Building ${imageName} from ${folder}..."
+
+                            // Step 1: Maven package (only if pom.xml exists)
+                            if (fileExists('pom.xml')) {
+                                sh 'mvn clean package -DskipTests'
+                            } else {
+                                echo "No pom.xml found in ${folder}, skipping Maven step."
+                            }
 
                             // Step 2: Docker build
-                            sh "docker build -t iharshal/${service}:latest ."
+                            sh "docker build -t iharshal/${imageName}:latest ."
 
                             // Step 3: Install Trivy if not already
                             sh '''
@@ -35,8 +46,8 @@ pipeline {
                             '''
 
                             // Step 4: Trivy scan (non-blocking)
-                            echo "Scanning iharshal/${service}:latest with Trivy..."
-                            sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${service}:latest || true"
+                            echo "Scanning iharshal/${imageName}:latest with Trivy..."
+                            sh "trivy image --severity HIGH,CRITICAL --no-progress iharshal/${imageName}:latest || true"
                         }
                     }
                 }
