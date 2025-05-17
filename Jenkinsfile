@@ -67,7 +67,7 @@ pipeline {
                             // Run Trivy scans
                             imageNames.each { imageName ->
                                 echo "Scanning iharshal/${imageName}:latest with Trivy..."
-                                sh "${trivyBinary} image --severity HIGH,CRITICAL --scanners vuln --skip-update --offline-scan --no-progress iharshal/${imageName}:latest || true"
+                                sh "${trivyBinary} image --severity HIGH,CRITICAL --scanners vuln --skip-db-update --offline-scan --no-progress iharshal/${imageName}:latest || true"
                             }
                         }
                     }
