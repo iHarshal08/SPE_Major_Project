@@ -1,76 +1,38 @@
-- name: Set working directory
-  ansible.builtin.set_fact:
-    k8s_dir: "{{ playbook_dir }}/../k8s"
+- name: Start Minikube (if not running)
+  shell: |
+    if ! minikube status | grep -q "host: Running"; then
+      minikube start
+    else
+      echo "Minikube already running"
+    fi
 
-- name: Apply MySQL Deployment
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ k8s_dir }}/mysql-deployment.yaml"
-    validate_certs: no
+- name: Apply all Kubernetes manifests
+  shell: kubectl apply -f {{ k8s_dir }}
+  register: kubectl_apply
+  failed_when: kubectl_apply.rc != 0
 
-- name: Apply MySQL Service
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ k8s_dir }}/mysql-service.yaml"
-    validate_certs: no
+- name: Wait for all pods to be ready
+  shell: kubectl wait --namespace {{ k8s_namespace }} --for=condition=Ready pod --all --timeout=180s
+  register: wait_pods
+  failed_when: wait_pods.rc != 0
 
-- name: Wait for MySQL pod to be ready
-  shell: kubectl wait --namespace {{ k8s_namespace }} --for=condition=ready pod -l app=mysql --timeout=120s
-  register: mysql_status
-  failed_when: "'condition met' not in mysql_status.stdout"
+- name: Get MySQL pod name
+  shell: kubectl get pods -n {{ k8s_namespace }} -l app=mysql -o jsonpath='{.items[0].metadata.name}'
+  register: mysql_pod
+  failed_when: mysql_pod.stdout == ""
 
-- name: Deploy Login Service
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ item }}"
-    validate_certs: no
-  loop:
-    - "{{ k8s_dir }}/login-deployment.yaml"
-    - "{{ k8s_dir }}/login-service.yaml"
+- name: Wait for MySQL server readiness
+  shell: |
+    until kubectl exec -n {{ k8s_namespace }} {{ mysql_pod.stdout }} -- mysqladmin ping -u root -p{{ mysql_password }} -h 127.0.0.1 --silent; do
+      echo "Waiting for MySQL to be up..."
+      sleep 5
+    done
+  retries: 24
+  delay: 5
+  register: mysql_ping
+  until: mysql_ping.rc == 0
 
-- name: Deploy KeyExchange Service
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ item }}"
-    validate_certs: no
-  loop:
-    - "{{ k8s_dir }}/keyexchange-deployment.yaml"
-    - "{{ k8s_dir }}/keyexchange-service.yaml"
-
-- name: Deploy Messaging Service
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ item }}"
-    validate_certs: no
-  loop:
-    - "{{ k8s_dir }}/messaging-deployment.yaml"
-    - "{{ k8s_dir }}/messaging-service.yaml"
-
-- name: Deploy Frontend
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ item }}"
-    validate_certs: no
-  loop:
-    - "{{ k8s_dir }}/frontend-deployment.yaml"
-    - "{{ k8s_dir }}/frontend-service.yaml"
-
-- name: Deploy Ingress
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/jenkins/.kube/config
-    state: present
-    namespace: "{{ k8s_namespace }}"
-    src: "{{ k8s_dir }}/ingress.yaml"
-    validate_certs: no
+- name: Run MySQL initialization script inside pod by piping SQL content
+  shell: cat {{ playbook_dir }}/../initialize.sql | kubectl exec -i -n {{ k8s_namespace }} {{ mysql_pod.stdout }} -- mysql -u root -p{{ mysql_password }} -h 127.0.0.1 chat
+  register: run_sql
+  failed_when: run_sql.rc != 0

@@ -1,7 +1,8 @@
-- name: Deploy chat application to Minikube using Kubernetes
+- name: Deploy Kubernetes and Setup MySQL
   hosts: localhost
-  become: false
   vars:
+    k8s_dir: "{{ playbook_dir }}/../k8s"
+    mysql_password: "Harshal@p0808"
     k8s_namespace: default
   roles:
     - k8s-deploy
