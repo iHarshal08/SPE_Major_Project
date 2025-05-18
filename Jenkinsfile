@@ -106,7 +106,7 @@ pipeline {
                   pip3 install --user ansible kubernetes
                   ansible-galaxy collection install kubernetes.core
                   mkdir -p ~/.kube
-                  cp /tmp/kubeconfig ~/.kube/config
+                  cp /tmp/kubeconfig-raw ~/.kube/config
                   chmod 600 ~/.kube/config
                   ansible-playbook -vvv ansible/playbook.yml
                 '''
