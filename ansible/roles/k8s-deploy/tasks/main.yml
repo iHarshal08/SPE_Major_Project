@@ -1,10 +1,6 @@
-- name: Start Minikube (if not running)
+- name: Ensure Minikube is running
   shell: |
-    if ! minikube status | grep -q "host: Running"; then
-      minikube start
-    else
-      echo "Minikube already running"
-    fi
+    minikube status || minikube start
 
 - name: Apply all Kubernetes manifests
   shell: kubectl apply -f {{ k8s_dir }}
