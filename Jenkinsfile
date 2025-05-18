@@ -101,7 +101,7 @@ pipeline {
         stage('Kubernetes Deployment via Ansible') {
               steps {
                 sh '''
-                      pip3 install --user --upgrade "ansible>=2.12,<2.15" kubernetes
+                      pip3 install --user ansible kubernetes
                       ansible-galaxy collection install kubernetes.core
                       mkdir -p ~/.kube
                       cp /home/harshal/.kube/config ~/.kube/config
