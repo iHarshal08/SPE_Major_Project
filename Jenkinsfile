@@ -99,19 +99,17 @@ pipeline {
         }
 
         stage('Kubernetes Deployment via Ansible') {
-              steps {
-                sh '''
-                  export LANG=en_US.UTF-8
-                  export LC_ALL=en_US.UTF-8
-                  pip3 install --user ansible kubernetes
-                  ansible-galaxy collection install kubernetes.core
-                  mkdir -p ~/.kube
-                  cp /tmp/kubeconfig-raw ~/.kube/config
-                  chmod 600 ~/.kube/config
-                  ansible-playbook -vvv ansible/playbook.yml
-                '''
-              }
-            }
+           steps {
+             // Use a single shell script block
+             sh '''
+
+               python3 -m pip install --upgrade --user pip
+               python3 -m pip install --user ansible kubernetes
+               ansible-playbook -i ansible/inventory.ini -vvv ansible/playbook.yml
+             '''
+           }
+         }
+
 
 
     }
