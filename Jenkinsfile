@@ -100,9 +100,14 @@ pipeline {
 
         stage('Kubernetes Deployment via Ansible') {
               steps {
-                sh 'ansible-galaxy collection install kubernetes.core'
-                sh 'pip3 install --user kubernetes'
-                sh 'ansible-playbook ansible/playbook.yml'
+                sh '''
+                      pip3 install --user --upgrade "ansible>=2.12,<2.15" kubernetes
+                      ansible-galaxy collection install kubernetes.core
+                      mkdir -p ~/.kube
+                      cp /home/harshal/.kube/config ~/.kube/config
+                      chmod 600 ~/.kube/config
+                      ansible-playbook -vvv ansible/playbook.yml
+                    '''
               }
             }
 
