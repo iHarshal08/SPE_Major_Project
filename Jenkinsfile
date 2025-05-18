@@ -102,7 +102,9 @@ pipeline {
            steps {
              // Use a single shell script block
              sh '''
-
+               export LC_ALL=en_US.UTF-8
+               export LANG=en_US.UTF-8
+               export LANGUAGE=en_US.UTF-8
                python3 -m pip install --upgrade --user pip
                python3 -m pip install --user ansible kubernetes
                ansible-playbook -i ansible/inventory.ini -vvv ansible/playbook.yml
