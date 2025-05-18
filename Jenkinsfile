@@ -107,6 +107,7 @@ pipeline {
                export LANGUAGE=en_US.UTF-8
                python3 -m pip install --upgrade --user pip
                python3 -m pip install --user ansible kubernetes
+               minikube delete || true
                ansible-playbook -i ansible/inventory.ini -vvv ansible/playbook.yml
              '''
            }
