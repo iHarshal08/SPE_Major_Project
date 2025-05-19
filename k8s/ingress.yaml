@@ -21,6 +21,7 @@ spec:
                 name: frontend
                 port:
                   number: 80
+
           - path: /login(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
@@ -28,6 +29,7 @@ spec:
                 name: login
                 port:
                   number: 8080
+
           - path: /keyexchange(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
@@ -35,6 +37,7 @@ spec:
                 name: keyexchange
                 port:
                   number: 8081
+
           - path: /messaging(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
@@ -42,5 +45,7 @@ spec:
                 name: messaging
                 port:
                   number: 8082
+
+
 
 
