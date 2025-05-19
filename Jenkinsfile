@@ -104,6 +104,7 @@ pipeline {
                export LANGUAGE=en_US.UTF-8
                python3 -m pip install --upgrade --user pip
                python3 -m pip install --user ansible kubernetes
+               minikube delete
                minikube start --driver=docker
                echo "Waiting for Minikube to stabilize..."
                sleep 20
@@ -111,6 +112,9 @@ pipeline {
              '''
            }
          }
+
+
+
     }
 
     post {
