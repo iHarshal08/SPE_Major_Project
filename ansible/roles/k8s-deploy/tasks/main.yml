@@ -7,6 +7,24 @@
   register: create_ns
   changed_when: "'created' in create_ns.stdout"
 
+- name: Ensure Helm is installed
+  shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    executable: /bin/bash
+
+- name: Add Helm repo for Prometheus
+  shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  args:
+    creates: ~/.cache/helm/repository/prometheus-community-index.yaml
+
+- name: Update Helm repos
+  shell: helm repo update
+
+- name: Install Prometheus + Grafana stack
+  shell: |
+    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+      --namespace monitoring --create-namespace
+
 - name: Ensure NGINX Ingress controller is enabled in Minikube
   shell: minikube addons enable ingress
   register: ingress_status
