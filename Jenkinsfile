@@ -40,7 +40,7 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
+ stage('Trivy Scan') {
     steps {
         script {
             def trivyDir = "${env.WORKSPACE}/.trivy"
@@ -53,32 +53,39 @@ pipeline {
             // Ensure .trivy folder exists
             sh "mkdir -p ${trivyDir}"
 
-            // Download + extract + verify
+            // Download, extract, and verify Trivy binary
             sh """
-                set -eux  # fail on error, print commands
+                set -eux
 
                 if [ ! -f "${trivyBinary}" ]; then
                     echo "Downloading Trivy v${trivyVersion}..."
-                    curl -Lf ${trivyUrl} -o ${trivyTar}
-                    tar -xzf ${trivyTar} -C ${trivyDir}
+                    curl -Lf ${trivyUrl} -o ${trivyTar} || { echo ' Download failed'; exit 1; }
 
-                    # Find the trivy binary (because the tar may extract with version in filename)
+                    echo "Extracting tar..."
+                    tar -xzf ${trivyTar} -C ${trivyDir} || { echo ' Extraction failed'; exit 1; }
+
+                    echo "Making binary executable..."
                     chmod +x ${trivyDir}/trivy || chmod +x ${trivyDir}/trivy_* || true
+
+                    echo "Renaming binary..."
                     mv ${trivyDir}/trivy_* ${trivyBinary} 2>/dev/null || true
 
+                    echo "Checking final binary:"
+                    ls -l ${trivyBinary}
+
                     if [ ! -x "${trivyBinary}" ]; then
-                        echo "Trivy binary missing or not executable"
+                        echo " Trivy binary missing or not executable"
                         ls -la ${trivyDir}
                         exit 1
                     fi
                 else
-                    echo "Trivy already installed at ${trivyBinary}"
+                    echo " Trivy already installed at ${trivyBinary}"
                 fi
             """
 
-            // Run Trivy scan
+            // Run Trivy scans
             imageNames.each { imageName ->
-                echo "Scanning iharshal/${imageName}:latest with Trivy..."
+                echo " Scanning iharshal/${imageName}:latest with Trivy..."
                 sh "${trivyBinary} image --severity HIGH,CRITICAL --skip-java-db-update --scanners vuln --skip-db-update --offline-scan --no-progress iharshal/${imageName}:latest || true"
             }
         }
