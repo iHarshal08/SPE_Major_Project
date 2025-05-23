@@ -57,7 +57,7 @@ pipeline {
             sh """
                 set -eux  # fail on error, print commands
 
-                if [ ! -x "${trivyBinary}" ]; then
+                if [ ! -f "${trivyBinary}" ]; then
                     echo "Downloading Trivy v${trivyVersion}..."
                     curl -Lf ${trivyUrl} -o ${trivyTar}
                     tar -xzf ${trivyTar} -C ${trivyDir}
