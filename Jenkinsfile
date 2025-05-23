@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_CREDS = credentials('DockerHubCred')
+        PATH = "/var/lib/jenkins/.local/bin:${env.PATH}"
     }
 
     stages {
