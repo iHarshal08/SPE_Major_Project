@@ -7,6 +7,15 @@
   register: ingress_status
   changed_when: "'enabled' in ingress_status.stdout"
 
+- name: Wait for NGINX ingress controller pod to be ready
+  shell: |
+    kubectl wait --namespace ingress-nginx \
+      --for=condition=Ready pod \
+      --selector=app.kubernetes.io/component=controller \
+      --timeout=90s
+  register: ingress_pod_wait
+  failed_when: ingress_pod_wait.rc != 0
+
 - name: Apply all Kubernetes manifests (fail only on real errors)
   shell: kubectl apply -f {{ k8s_dir }}
   register: kubectl_apply
