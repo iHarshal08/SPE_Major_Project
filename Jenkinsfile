@@ -44,48 +44,43 @@ pipeline {
     steps {
         script {
             def trivyDir = "${env.WORKSPACE}/.trivy"
-            def trivyBinary = "${trivyDir}/trivy"
             def trivyVersion = "0.50.2"
             def trivyTar = "${trivyDir}/trivy.tar.gz"
             def trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v${trivyVersion}/trivy_${trivyVersion}_Linux-64bit.tar.gz"
+            def trivyBinary = "${trivyDir}/trivy"
             def imageNames = ['login', 'frontend', 'keyexchange', 'messaging']
 
-            // Ensure .trivy folder exists
-            sh "mkdir -p ${trivyDir}"
-
-            // Download, extract, and verify Trivy binary
             sh """
                 set -eux
 
+                mkdir -p "${trivyDir}"
+
                 if [ ! -f "${trivyBinary}" ]; then
-                    echo "Downloading Trivy v${trivyVersion}..."
-                    curl -Lf ${trivyUrl} -o ${trivyTar} || { echo ' Download failed'; exit 1; }
+                    echo "📥 Downloading Trivy to workspace..."
+                    curl -Lf "${trivyUrl}" -o "${trivyTar}" || { echo '❌ Download failed'; exit 1; }
 
-                    echo "Extracting tar..."
-                    tar -xzf ${trivyTar} -C ${trivyDir} || { echo ' Extraction failed'; exit 1; }
+                    echo "📦 Extracting Trivy..."
+                    tar -xzf "${trivyTar}" -C "${trivyDir}" || { echo '❌ Extraction failed'; exit 1; }
 
-                    echo "Making binary executable..."
-                    chmod +x ${trivyDir}/trivy || chmod +x ${trivyDir}/trivy_* || true
+                    echo "🎯 Making Trivy executable..."
+                    chmod +x "${trivyDir}/trivy" || chmod +x ${trivyDir}/trivy_* || true
+                    mv ${trivyDir}/trivy_* "${trivyBinary}" 2>/dev/null || true
 
-                    echo "Renaming binary..."
-                    mv ${trivyDir}/trivy_* ${trivyBinary} 2>/dev/null || true
-
-                    echo "Checking final binary:"
-                    ls -l ${trivyBinary}
+                    echo "🔍 Verifying binary:"
+                    ls -l "${trivyBinary}"
 
                     if [ ! -x "${trivyBinary}" ]; then
-                        echo " Trivy binary missing or not executable"
-                        ls -la ${trivyDir}
+                        echo "❌ Trivy binary not executable"
                         exit 1
                     fi
                 else
-                    echo " Trivy already installed at ${trivyBinary}"
+                    echo "✅ Trivy already staged at ${trivyBinary}"
                 fi
             """
 
-            // Run Trivy scans
+            // Run scans
             imageNames.each { imageName ->
-                echo " Scanning iharshal/${imageName}:latest with Trivy..."
+                echo "🚨 Scanning iharshal/${imageName}:latest with Trivy..."
                 sh "${trivyBinary} image --severity HIGH,CRITICAL --skip-java-db-update --scanners vuln --skip-db-update --offline-scan --no-progress iharshal/${imageName}:latest || true"
             }
         }
