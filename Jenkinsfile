@@ -52,15 +52,26 @@ pipeline {
             // Ensure .trivy folder exists
             sh "mkdir -p ${trivyDir}"
 
-            // Download and extract Trivy
+            // Download + extract + verify
             sh """
+                set -eux  # fail on error, print commands
+
                 if [ ! -x "${trivyBinary}" ]; then
                     echo "Downloading Trivy v${trivyVersion}..."
-                    curl -Lf ${trivyUrl} -o ${trivyTar} || { echo 'Download failed'; exit 1; }
-                    tar -xzf ${trivyTar} -C ${trivyDir} || { echo 'Extraction failed'; exit 1; }
-                    chmod +x ${trivyDir}/trivy || { echo 'chmod failed'; exit 1; }
+                    curl -Lf ${trivyUrl} -o ${trivyTar}
+                    tar -xzf ${trivyTar} -C ${trivyDir}
+
+                    # Find the trivy binary (because the tar may extract with version in filename)
+                    chmod +x ${trivyDir}/trivy || chmod +x ${trivyDir}/trivy_* || true
+                    mv ${trivyDir}/trivy_* ${trivyBinary} 2>/dev/null || true
+
+                    if [ ! -x "${trivyBinary}" ]; then
+                        echo "Trivy binary missing or not executable"
+                        ls -la ${trivyDir}
+                        exit 1
+                    fi
                 else
-                    echo "Trivy already installed at ${trivyBinary}, skipping download."
+                    echo "Trivy already installed at ${trivyBinary}"
                 fi
             """
 
