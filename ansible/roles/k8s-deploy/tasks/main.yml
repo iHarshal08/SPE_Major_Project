@@ -2,6 +2,11 @@
   shell: |
     minikube status || minikube start
 
+- name: Ensure monitoring namespace exists
+  shell: kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+  register: create_ns
+  changed_when: "'created' in create_ns.stdout"
+
 - name: Ensure NGINX Ingress controller is enabled in Minikube
   shell: minikube addons enable ingress
   register: ingress_status
