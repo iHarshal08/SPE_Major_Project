@@ -57,7 +57,8 @@ pipeline {
 
                 if [ ! -f "${trivyBinary}" ]; then
                     echo "📥 Downloading Trivy to workspace..."
-                    curl -Lf "${trivyUrl}" -o "${trivyTar}" || { echo '❌ Download failed'; exit 1; }
+wget -O "${trivyTar}" "${trivyUrl}" || { echo '❌ wget download failed'; exit 1; }
+
 
                     echo "📦 Extracting Trivy..."
                     tar -xzf "${trivyTar}" -C "${trivyDir}" || { echo '❌ Extraction failed'; exit 1; }
