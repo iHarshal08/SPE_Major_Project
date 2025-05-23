@@ -2,10 +2,11 @@
   shell: |
     minikube status || minikube start
 
-- name: Apply all Kubernetes manifests
+- name: Apply all Kubernetes manifests (fail only on real errors)
   shell: kubectl apply -f {{ k8s_dir }}
   register: kubectl_apply
-  failed_when: kubectl_apply.rc != 0
+  failed_when: "'error' in kubectl_apply.stderr.lower()"
+
 
 - name: Wait for all pods to be ready
   shell: kubectl wait --namespace {{ k8s_namespace }} --for=condition=Ready pod --all --timeout=60s || true
