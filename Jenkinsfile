@@ -8,6 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                echo "Jenkinsfile is updated!"
                 git branch: 'main', url: 'https://github.com/iHarshal08/SPE_Major_Project.git'
             }
         }
